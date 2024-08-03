@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.cheeus.member.repository.MemberMatchDao">
+	
+<select id="findAll" parameterType="String" resultType="com.cheeus.member.domain.MemberProfile">
+	SELECT * FROM profile
+	WHERE NOT email = #{email}
+	LIMIT 5
+</select>
+
+<!-- 거리 조건 추가 예정 -->
+<select id="findAllDistance" parameterType="String" resultType="com.cheeus.member.domain.MemberProfile">
+	select sum(sales) from cookie_sales
+	group by first_name
+	order by sum(sales) desc
+	Limit 2
+</select>
+
+
+
+
+<select id="findMatchRooms" parameterType="com.cheeus.member.domain.MemberMatch" resultType="java.lang.Integer">
+	SELECT count(*) FROM oneone_chat_rooms
+	WHERE member1=#{member1} and member2=#{member2}
+</select>
+
+<select id="loadMatchState" parameterType="com.cheeus.member.domain.MemberMatch" resultType="java.lang.Integer">
+	SELECT matchState FROM oneone_chat_rooms
+	WHERE member1=#{member1} and member2=#{member2}
+</select>
+
+<select id="findMyMatch" parameterType="String" resultType="String">
+	SELECT member2 FROM oneone_chat_rooms
+	WHERE member1=#{member1}
+</select>
+
+<select id="successMatch" parameterType="com.cheeus.member.domain.MemberMatch" resultType="com.cheeus.member.domain.MemberMatch">
+	SELECT * FROM oneone_chat_rooms
+	WHERE member1=#{member1} and member2=#{member2}
+</select>
+
+
+<insert id="createMatchRooms" parameterType="com.cheeus.member.domain.MemberMatch">
+	INSERT INTO oneone_chat_rooms(
+		member1, member2, matchState)
+	VALUES (
+		#{member1}, #{member2}, #{matchState})
+</insert>
+
+<update id="MatchUpdate" parameterType="com.cheeus.member.domain.MemberMatch">
+	UPDATE oneone_chat_rooms SET
+	matchState=#{matchState}
+	WHERE member1=#{member1} and member2=#{member2}
+</update>
+
+
+
+</mapper>

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.cheeus.member.repository.MemberProfileDao">
+	
+<select id="findByEmail" parameterType="String" resultType="com.cheeus.member.domain.MemberProfile">
+	SELECT *
+	FROM profile
+	WHERE email=#{email}
+</select>
+
+<select id="existNickname" parameterType="String" resultType="java.lang.Integer">
+	SELECT count(*)
+	FROM profile
+	WHERE nickname=#{nickname}
+</select>
+
+<insert id="createMember" parameterType="com.cheeus.member.domain.MemberProfile">
+	INSERT INTO profile(
+		email, name, nickname, photo, tel, birth,
+		gender, tags, match_ok, location_ok, latitude,
+		longitude, location, intro)
+	VALUES(
+		#{email}, #{name}, #{nickname}, #{photo}, #{tel}, #{birth},
+		#{gender}, #{tags}, #{matchOk}, #{locationOk}, #{latitude},
+		#{longitude}, #{location}, #{intro})
+</insert>
+
+<update id="updateMember" parameterType="com.cheeus.member.domain.MemberProfile">
+	UPDATE profile SET 
+		photo = #{photo},
+		tags = #{tags},
+		match_ok = #{matchOk},
+		location_ok = #{locationOk},
+		location = #{location},
+		intro = #{intro}
+	WHERE email=#{email}
+</update>
+
+<delete id="deleteMember" parameterType="String">
+	DELETE FROM profile WHERE email=#{email} 
+</delete>
+
+
+
+<update id="allowLocation" parameterType="com.cheeus.member.request.LocationRequest">
+	UPDATE profile SET
+		latitude = #{latitude},
+		longitude = #{longitude},
+		location_ok = 1
+	WHERE email=#{email}
+</update>
+
+<update id="allowMatching" parameterType="String">
+	UPDATE profile SET
+	match_ok = 1
+	WHERE email=#{email}
+</update>
+
+
+
+<select id="findPopularity" parameterType="String" resultType="String">
+	SELECT liker
+	FROM popularity_list
+	WHERE email=#{email}
+</select>
+
+<select id="countPopularity" parameterType="String" resultType="java.lang.Integer">
+	SELECT count(*)
+	FROM popularity_list
+	WHERE email=#{email}
+</select>
+
+<select id="existPopularity" parameterType="com.cheeus.member.domain.MemberPopularity" resultType="java.lang.Integer">
+	SELECT count(*)
+	FROM popularity_list
+	WHERE email=#{email} AND liker=#{liker}
+</select>
+
+<insert id="addPopularity" parameterType="com.cheeus.member.domain.MemberPopularity">
+	INSERT INTO popularity_list (email, liker) VALUES (#{email}, #{liker})
+</insert>
+
+<delete id="deletePopularity" parameterType="com.cheeus.member.domain.MemberPopularity">
+	DELETE FROM popularity_list WHERE liker=#{liker} and email=#{email}
+</delete>
+
+</mapper>
