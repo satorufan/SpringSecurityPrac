@@ -50,9 +50,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         System.out.println("OAuth2Attribute : " + oAuth2Attribute);
 		System.out.println("memberAttribute : " + memberAttribute);
 
-//        return new DefaultOAuth2User(
-//                Collections.singleton(new SimpleGrantedAuthority("ROLE_USER")),
-//                memberAttribute, "email");
 		Member member = new Member();
 		member.setEmail(oAuth2Attribute.getEmail());
 		member.setRole("ROLE_USER");

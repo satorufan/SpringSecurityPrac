@@ -4,21 +4,14 @@ import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
-
-import com.cheeus.config.auth.CustomOAuth2User;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -86,7 +79,7 @@ public class JWTUtil {
                 .signWith(key, SignatureAlgorithm.HS256)
         		.setSubject((String) attributes.get("id"))
         		.setIssuedAt(now)
-                .setExpiration(new Date(now.getTime() + 10000))
+                .setExpiration(new Date(now.getTime() + expiredMs))
                 .compact();
         
     }
@@ -97,13 +90,11 @@ public class JWTUtil {
         try {
         	
         	Authentication authentication = getAuthentication(token);
-//        	System.out.println("principal : " + authentication.getPrincipal());
-//        	CustomOAuth2User customOAuth2User = (CustomOAuth2User) authentication.getPrincipal();
-//        	System.out.println("principal");
         	
-            String role = "ROLE_USER";
-            
-//            System.out.println("customOAuth2User : " + customOAuth2User);
+            Claims claims = parseClaims(token);
+            List<SimpleGrantedAuthority> authorities = getAuthorities(claims);
+        	
+            String role = authorities.get(0).toString();
             
             return createJwt((Map<String, Object>) authentication.getPrincipal(), role, 60*60*60L);
         } catch (Exception e) {
@@ -123,25 +114,22 @@ public class JWTUtil {
     
     //인증된 토큰인지 확인하기 위해 토큰을 디코딩하는 작업.
     public Authentication getAuthentication(String token) {
+    	
     	System.out.println("JWTUtil - getAuthentication : " + token);
-        Claims claims = parseClaims(token);
-        List<SimpleGrantedAuthority> authorities = getAuthorities(claims);
-        
         
     	Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    	System.out.println(authentication);
     	
-		
-        return new UsernamePasswordAuthenticationToken(claims, null, authorities);
-//    	return authentication;
+    	return authentication;
     }
+    
     private List<SimpleGrantedAuthority> getAuthorities(Claims claims) {
+    	
         return Collections.singletonList(new SimpleGrantedAuthority(
                 claims.get("role").toString()));
     }
     
     
-    private Claims parseClaims(String token) {
+    public Claims parseClaims(String token) {
     	
     	Key key = Keys.hmacShaKeyFor(secretkey.getBytes(StandardCharsets.UTF_8));
     	

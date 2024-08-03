@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -32,6 +34,7 @@ import lombok.RequiredArgsConstructor;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JWTUtil jwtUtil;
+    private final CookieUtil cookieUtil;
     
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -40,7 +43,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     	try {
     		//Authorization 쿠키를 불러온다.
     		Cookie cookie = WebUtils.getCookie(request, "Authorization");
-    		System.out.println("Cookie : " + cookie);
     		//쿠키의 Value를 가져온다.
     		if (cookie != null) {
 	    		String authorizationHeader = cookie.getValue();
@@ -48,7 +50,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 	
 	            if (authorizationHeader != null) {
 	                String token = authorizationHeader;//.substring(7); // "Bearer " 다음의 토큰 부분만 추출
-	                System.out.println("token : " + token);
 	
 	                if (jwtUtil.isExpired(token)) {
 	                	
@@ -60,24 +61,33 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 	                    Date expirationDate = jwtUtil.getExpirationDateFromToken(token);
 	                    Date now = new Date();
 	                    long remainingTime = expirationDate.getTime() - now.getTime();
-	                    System.out.println("remainingTime : " + remainingTime);
 	
 	                    // 토큰 만료 30분 이내라면 재발급
 	                    if (remainingTime < 30 * 60 * 1000) {
 	                        String refreshedToken = jwtUtil.refreshToken(token);
 	                        setAuthentication(request, refreshedToken);
-	                        System.out.println("refresh : " + refreshedToken);
-	                        CookieUtil.addCookie(response, "Authorization", refreshedToken, 60*60*24);
+	                        cookieUtil.addCookie(response, "Authorization", refreshedToken, 60*60*24*7);
 	                    }
 
-	                }
+	                } else {
+		            	
+		            	cookieUtil.deleteCookie(request, response, "Authorization");
+		            	
+		            	response.setStatus(HttpStatus.UNAUTHORIZED.value());
+		                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+		                response.setCharacterEncoding("UTF-8");
+		                
+		            	return;
+		            }
 	            }
     		}
+    		
         } catch (Exception e) {
             logger.error("Cannot set user authentication: {}", e);
         }
 
         filterChain.doFilter(request, response);
+
     }
     
 //    private void setAuthentication(String accessToken) {
@@ -93,7 +103,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     	SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
     	
     	AbstractAuthenticationToken authenticationToken = 
-    			new UsernamePasswordAuthenticationToken(jwtUtil.getEmail(accessToken), null, authorities);
+    			new UsernamePasswordAuthenticationToken(jwtUtil.parseClaims(accessToken), null, authorities);
     	
     	authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
     	

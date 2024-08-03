@@ -53,6 +53,13 @@ public class MemberController {
 		return ResponseEntity.ok(service.signIn(email));
 	}
 	
+	//토큰 만료 체크
+	@GetMapping("/tokenCheck")
+	public ResponseEntity<?> tokenCheck(@RequestParam("email") String email) {
+		
+		return ResponseEntity.ok(service.existByEmail(email));
+	}
+	
 	///////////////////// 이 부분은 테스트 /////////////////////////
 	@GetMapping("/signIn2")
 	public ResponseEntity<?> signIn2(@RequestParam("email") String email)

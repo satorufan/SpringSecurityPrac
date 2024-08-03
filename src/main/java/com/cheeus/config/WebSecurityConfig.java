@@ -21,6 +21,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 
 import com.cheeus.config.auth.CustomOAuth2UserService;
 import com.cheeus.config.auth.filter.JwtAuthFilter;
+import com.cheeus.config.auth.handler.OAuth2FailureHandler;
 import com.cheeus.config.auth.handler.OAuth2SuccessHandler;
 
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class WebSecurityConfig {
 	
 	private final CustomOAuth2UserService oAuth2UserService;
 	private final OAuth2SuccessHandler successHandler;
+	private final OAuth2FailureHandler failureHandler;
     private final JwtAuthFilter jwtAuthFilter;
     
     @Bean
@@ -59,8 +61,8 @@ public class WebSecurityConfig {
             //로그인 한사람은 /member로 시작하는 url 모두 허용.
             .authorizeHttpRequests(a -> a
                     //.requestMatchers("/member/**").permitAll()//.authenticated()
-            		.requestMatchers("/member/signIn2").hasRole("USER")
-            		.requestMatchers("/member/signIn3").authenticated()
+            		.requestMatchers("/member/**").hasRole("USER")
+            		.requestMatchers("http://localhost:8080/login/oauth2/code/**").authenticated()
             		//.requestMatchers("/member/signIn").authenticated()//.hasRole("USER")
                     //.anyRequest().authenticated()
             		.anyRequest().permitAll()
@@ -78,6 +80,7 @@ public class WebSecurityConfig {
             		.successHandler(successHandler)
             		.userInfoEndpoint(userInfoEndpoint -> userInfoEndpoint
                             .userService(oAuth2UserService))
+            		.failureHandler(failureHandler)
             		)
             ;
             
